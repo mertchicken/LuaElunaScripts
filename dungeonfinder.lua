@@ -63,15 +63,6 @@ local function OnLeave(event, player, msg, Type, lang)
 	end
 end
 
-local function OnLogout(event, player)
-	local savedLocation = player:GetData("savedLocation")
-	if savedLocation then
-		RemoveUnfinishedDungeonFinderQuests(player)
-		player:SetData("savedLocation", nil)
-		player:SendNotification("Unfinished Dungeon Finder Quests Removed")
-	end
-end
-
 local function OnJoin(event, player, msg, Type, lang)
     if (msg == "#df join") then
         local playerGUID = getPlayerCharacterGUID(player)
@@ -119,4 +110,3 @@ end
 
 RegisterPlayerEvent(18, OnJoin)
 RegisterPlayerEvent(18, OnLeave)
-RegisterPlayerEvent(3, OnLogout)
