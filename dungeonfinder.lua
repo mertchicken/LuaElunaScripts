@@ -37,32 +37,6 @@ end
 	{mapId = 668, x = 5239.46, y = 1932.99, z = 707.7, o = .79, questId = 27041}
         }
 
-local function OnLeave(event, player, msg, Type, lang)
-	if msg == "#df leave" then
-		if player:GetMap():IsDungeon() then
-			local savedLocation = player:GetData("savedLocation")
-			if savedLocation then
-				local questsToRemove = {27027, 27028, 27029, 27030, 27031, 27032, 27033, 27034, 27035, 27036, 27037, 27038, 27039, 27040, 27041}
-				
-				-- Iterate through the quests to be removed
-				for _, questId in ipairs(questsToRemove) do
-					local questStatus = player:GetQuestStatus(questId)
-					if questStatus == 3 then
-						player:RemoveQuest(questId)
-					end
-				end
-				
-				player:Teleport(savedLocation.mapId, savedLocation.x, savedLocation.y, savedLocation.z, savedLocation.o)
-				player:SetData("savedLocation", nil)
-				player:SendNotification("Unfinished Dungeon Finder Quests Removed")
-			else
-				player:SendNotification("There is no saved location to teleport to.")
-			end
-			return
-		end
-	end
-end
-
 local function OnJoin(event, player, msg, Type, lang)
     if (msg == "#df join") then
         local playerGUID = getPlayerCharacterGUID(player)
@@ -94,8 +68,6 @@ local function OnJoin(event, player, msg, Type, lang)
             end
         end
 
-	
-
         if #eligibleLocations == 0 then
             player:SendNotification("There are no more dungeons you can do today.")
         else
@@ -106,6 +78,32 @@ local function OnJoin(event, player, msg, Type, lang)
         end
 
     end
+end
+
+local function OnLeave(event, player, msg, Type, lang)
+	if msg == "#df leave" then
+		if player:GetMap():IsDungeon() then
+			local savedLocation = player:GetData("savedLocation")
+			if savedLocation then
+				local questsToRemove = {27027, 27028, 27029, 27030, 27031, 27032, 27033, 27034, 27035, 27036, 27037, 27038, 27039, 27040, 27041}
+				
+				-- Iterate through the quests to be removed
+				for _, questId in ipairs(questsToRemove) do
+					local questStatus = player:GetQuestStatus(questId)
+					if questStatus == 3 then
+						player:RemoveQuest(questId)
+					end
+				end
+				
+				player:Teleport(savedLocation.mapId, savedLocation.x, savedLocation.y, savedLocation.z, savedLocation.o)
+				player:SetData("savedLocation", nil)
+				player:SendNotification("Unfinished Dungeon Finder Quests Removed")
+			else
+				player:SendNotification("There is no saved location to teleport to.")
+			end
+			return
+		end
+	end
 end
 
 RegisterPlayerEvent(18, OnJoin)
