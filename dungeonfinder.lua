@@ -19,6 +19,8 @@ local function tableContains(table, value)
     return false
 end
 
+    local savedLocations = {}
+
     local teleportLocations = {
 	{mapId = 595, x = 1431.47, y = 555.04, z = 36.27, o = 1, questId = 27027},
 	{mapId = 619, x = 335.74, y = -1108.36, z = 68.51, o = 1, questId = 27028},
@@ -36,16 +38,15 @@ end
 	{mapId = 658, x = 432.57, y = 212.34, z = 528.71, o = 0, questId = 27040},
 	{mapId = 668, x = 5239.46, y = 1932.99, z = 707.7, o = .79, questId = 27041}
         }
-
-local function OnJoin(event, player, msg, Type, lang)
-    if (msg == "#df join") then
+local function OnJoin(event, player, command)
+    if command == "dfjoin" then
         local playerGUID = getPlayerCharacterGUID(player)
 
         if not player:GetMap():IsDungeon() then
             local currentMapId = player:GetMapId()
             local currentX, currentY, currentZ, currentO = player:GetLocation()
             local currentLocation = {mapId = currentMapId, x = currentX, y = currentY, z = currentZ, o = currentO}
-            player:SetData("savedLocation", currentLocation)
+            savedLocations[playerGUID] = currentLocation
         end
 
         local completedQuests = {}
@@ -55,7 +56,7 @@ local function OnJoin(event, player, msg, Type, lang)
                 local row = queryCompletedQuests:GetRow()
                 local questId = tonumber(row["quest"])
                 table.insert(completedQuests, questId)
-                until not queryCompletedQuests:NextRow()
+            until not queryCompletedQuests:NextRow()
         end
 
         local eligibleLocations = {}
@@ -80,31 +81,31 @@ local function OnJoin(event, player, msg, Type, lang)
     end
 end
 
-local function OnLeave(event, player, msg, Type, lang)
-	if msg == "#df leave" then
-		if player:GetMap():IsDungeon() then
-			local savedLocation = player:GetData("savedLocation")
-			if savedLocation then
-				local questsToRemove = {27027, 27028, 27029, 27030, 27031, 27032, 27033, 27034, 27035, 27036, 27037, 27038, 27039, 27040, 27041}
-				
-				-- Iterate through the quests to be removed
-				for _, questId in ipairs(questsToRemove) do
-					local questStatus = player:GetQuestStatus(questId)
-					if questStatus == 3 then
-						player:RemoveQuest(questId)
-					end
-				end
-				
-				player:Teleport(savedLocation.mapId, savedLocation.x, savedLocation.y, savedLocation.z, savedLocation.o)
-				player:SetData("savedLocation", nil)
-				player:SendNotification("Unfinished Dungeon Finder Quests Removed")
-			else
-				player:SendNotification("There is no saved location to teleport to.")
-			end
-			return
-		end
-	end
+local function OnLeave(event, player, command)
+    if command == "dfleave" then
+        if player:GetMap():IsDungeon() then
+            local playerGUID = getPlayerCharacterGUID(player)
+            local savedLocation = savedLocations[playerGUID]
+            if savedLocation then
+                local questsToRemove = {27027, 27028, 27029, 27030, 27031, 27032, 27033, 27034, 27035, 27036, 27037, 27038, 27039, 27040, 27041}
+
+                -- Iterate through the quests to be removed
+                for _, questId in ipairs(questsToRemove) do
+                    local questStatus = player:GetQuestStatus(questId)
+                    if questStatus == 3 then
+                        player:RemoveQuest(questId)
+                    end
+                end
+
+                player:Teleport(savedLocation.mapId, savedLocation.x, savedLocation.y, savedLocation.z, savedLocation.o)
+                savedLocations[playerGUID] = nil
+                player:SendNotification("Unfinished Dungeon Finder Quests Removed")
+            else
+                player:SendNotification("There is no saved location to teleport to.")
+            end
+        end
+    end
 end
 
-RegisterPlayerEvent(18, OnJoin)
-RegisterPlayerEvent(18, OnLeave)
+RegisterPlayerEvent(42, OnJoin) -- Command event for dfjoin
+RegisterPlayerEvent(42, OnLeave) -- Command event for dfleave
